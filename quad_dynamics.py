@@ -22,7 +22,8 @@ class QuadDynamics:
     self.clipper_props = P.clipped_props
 
   def update(self, u):
-    # u += np.random.normal(np.zeros((4,1)), self.input_stdev*np.ones((4,1)))
+    u += np.random.normal(np.zeros((4,1)), self.input_stdev*np.ones((4,1)))
+    u = self.sat(u)
 
     fm = self.force_moment(u)
     k1 = self.derivatives(self.state, fm)
@@ -66,9 +67,17 @@ class QuadDynamics:
         fm_motor = self.mixer @ delta
     f = np.array([[0],[0],[-1]]) * fm_motor.item(0)
 
-    # f -= self.D @ R_bi.T @ self.state[3:6]
+    f -= self.D @ R_bi.T @ self.state[3:6]
 
     m = fm_motor[1:]
     # m += -np.sign(om) * self.A @ (om * om) #hackish, but gets the job done
 
     return np.vstack([f, m])
+
+  def sat(self, inputs):
+      for i in range(inputs.shape[0]):
+          if inputs[i] > 1.0:
+              inputs[i] = 1.0
+          elif inputs[i] < 0.0:
+              inputs[i] = 0.0
+      return inputs
