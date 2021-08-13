@@ -1,6 +1,6 @@
 import numpy as np
 import control
-from utils import *
+from so3 import *
 
 #this controller uses LQR for trajectory following
 #and geometric control for attitude tracking
@@ -11,6 +11,9 @@ class QuadLinearController:
         self.Kt, _, _ = control.lqr(P.At, P.Bt, P.Qt, P.Rt)
         self.Qr = P.Qr
         self.Rr = P.Rr
+
+        self.p_err_int = np.zeros((3,1))
+        self.p_err_prev = np.zeros((3,1))
 
         self.Kom = P.Kom
         self.kr = P.kr
@@ -24,7 +27,7 @@ class QuadLinearController:
         self.om_d_dot = np.zeros((3,1))
         self.om_d_prev = np.zeros((3,1))
 
-        self.mix_inv = np.linalg.inv(P.mixer)
+        self.mix_inv = np.linalg.inv(P.control_mixer)
 
         self.clipped_props = P.clipped_props
         self.clipped_mix_inv = np.linalg.inv(P.mixer[[0,2],:2])
@@ -39,7 +42,13 @@ class QuadLinearController:
 
         p_err = p - des.pd
         pdot_err = v - des.pd_dot
-        et = np.vstack([p_err, pdot_err])
+
+        self.p_err_int += self.ts/2.0 * (p_err + self.p_err_prev)
+        self.p_err_prev = p_err
+
+        et = np.vstack([p_err, pdot_err, self.p_err_int])
+
+        # et = np.vstack([p_err, pdot_err])
 
         if not self.clipped_props:
             psid = des.psid

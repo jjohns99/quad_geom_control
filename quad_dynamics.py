@@ -1,5 +1,5 @@
 import numpy as np
-from utils import *
+from so3 import *
 
 class QuadDynamics:
   def __init__(self, P):

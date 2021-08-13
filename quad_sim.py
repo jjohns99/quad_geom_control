@@ -4,16 +4,18 @@ import params as P
 from quad_dynamics import QuadDynamics
 from quad_geometric_controller import *
 from quad_linear_controller import QuadLinearController
+from quad_se3_controller import QuadSE3Controller
 from trajectory_generator import TrajectoryGenerator
 from viewer.quad_viewer import QuadViewer
 from viewer.state_viewer import StateViewer
 from viewer.controls_viewer import ControlsViewer
-from utils import Euler2Quat
+from so3 import Euler2Quat
 
 def main():
     dyn = QuadDynamics(P)
     # ctrl = QuadGeometricController(P)
     ctrl = QuadLinearController(P)
+    # ctrl = QuadSE3Controller(P)
 
     traj = TrajectoryGenerator()
     traj.create_sin_traj(P.period, P.amplitude, P.phase, P.offset)

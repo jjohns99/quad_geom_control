@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.interpolate import BSpline
-from utils import *
+from so3 import *
 from quad_geometric_controller import DesiredState
 import matplotlib.pyplot as plt
 
@@ -37,8 +37,8 @@ class TrajectoryGenerator:
             vy = p_dot.item(1)
             ax = p_ddot.item(0)
             ay = p_ddot.item(1)
-            psi = 0.0#np.arctan2(vy, vx)
-            psi_dot = 0.0#(vx*ay + vy*ax)/(vx**2 + vy**2)
+            psi = 0.0 # np.arctan2(vy, vx)
+            psi_dot = 0.0 #(vx*ay + vy*ax)/(vx**2 + vy**2)
             # psi = 10.*t
             # psi_dot = 10.0
 

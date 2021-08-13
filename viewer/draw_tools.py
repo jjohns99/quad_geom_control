@@ -1,6 +1,6 @@
 import numpy as np
 import pyqtgraph.opengl as gl
-from utils import Quat2Rotation
+from so3 import Quat2Rotation
 
 class drawQuad():
     def __init__(self, state, window, arm_length):

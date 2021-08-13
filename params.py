@@ -1,5 +1,5 @@
 import numpy as np
-from utils import *
+from so3 import *
 
 #initial conditions
 x0 = np.array([[0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
@@ -18,13 +18,19 @@ kf = g
 kt = 5.0
 l = 0.25
 
-input_stdev = 0.04
+input_stdev = 0.0 #0.04
 
 #quad mixer
 mixer = np.array([[kf, kf, kf, kf],
                 [0, 0, l*kf, -l*kf],
                 [l*kf, -l*kf, 0, 0],
                 [-kt, -kt, kt, kt]])
+
+control_kf = kf*1.2
+control_mixer = np.array([[control_kf, control_kf, control_kf, control_kf],
+                          [0, 0, l*control_kf, -l*control_kf],
+                          [l*control_kf, -l*control_kf, 0, 0],
+                          [-kt, -kt, kt, kt]])
 
 #rotors 3 and 4 clipped?
 clipped_props = False
@@ -41,10 +47,23 @@ kr = np.diag([10., 10., 10.])
 Kom = 0.6*np.diag([1.0, 1.0, 1.0])*2
 sig = 0.05
 
-#linear control params
-At = np.block([[np.zeros((3,3)), np.eye(3)], [np.zeros((3,3)), np.zeros((3,3))]])
-Bt = np.vstack([np.zeros((3,3)), -1.0/m*np.eye(3)])
-Qt = np.diag([2.0, 2.0, 2.0, 1.0, 1.0, 1.0])
+#SE(3) control params
+# Kt = np.diag([2.0, 2.0, 2.2, 2., 2., 2.])
+# Kv = np.diag([2.5, 2.5, 2.5])
+# Kom = 1.2*np.diag([1.0, 1.0, 1.0])
+
+# #linear control params
+# At = np.block([[np.zeros((3,3)), np.eye(3)], [np.zeros((3,3)), np.zeros((3,3))]])
+# Bt = np.vstack([np.zeros((3,3)), -1.0/m*np.eye(3)])
+# Qt = np.diag([2.0, 2.0, 2.0, 1.0, 1.0, 1.0])
+# Rt = np.diag([0.1, 0.1, 1.0])
+# Qr = np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*0.01
+# Rr = np.diag([0.05, 0.05, 0.05])
+
+#linear control params (with integrator)
+At = np.block([[np.zeros((3,3)), np.eye(3), np.zeros((3,3))], [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3))], [np.eye(3), np.zeros((3,3)), np.zeros((3,3))]])
+Bt = np.vstack([np.zeros((3,3)), -1.0/m*np.eye(3), np.zeros((3,3))])
+Qt = np.diag([2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
 Rt = np.diag([0.1, 0.1, 1.0])
 Qr = np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*0.01
 Rr = np.diag([0.05, 0.05, 0.05])
@@ -63,13 +82,13 @@ offset = np.array([[0.0, 0.0, -1.5]]).T
 
 #bspline trajectory params
 #flip trajectory
-# knots = np.array([0,0,0,0,1.3,1.7,3,3,3,3])*1.5
-# coeffs = np.array([[0,0],[0,0],[6.0,-15],[-4.0,-15],[3.0,0],[3.0,0]]).T 
+# knots = np.array([0,0,0,0,1.1,1.9,3,3,3,3])*1.5
+# coeffs = np.array([[0,0],[0,0],[3.0,-15],[-1.0,-15],[3.0,0],[3.0,0]]).T 
 # degree = 3
 #line trajectory
-# knots = np.array([0,0,0,0,3,3,3,3])*5
-# coeffs = np.array([[0,0],[0,0],[5.0,-3.0],[5.0,-3.0]]).T 
-# degree = 3
-knots = np.array([0,0,0,0,1.0,2.0,3,3,3,3])*1.5
-coeffs = np.array([[0,0],[0,0],[3.0,-8],[6.0,-8],[9.0,0],[9.0,0]]).T 
+knots = np.array([0,0,0,0,3,3,3,3])*5
+coeffs = np.array([[0,0],[0,0],[5.0,-3.0],[5.0,-3.0]]).T 
 degree = 3
+# knots = np.array([0,0,0,0,1.0,2.0,3,3,3,3])*1.5
+# coeffs = np.array([[0,0],[0,0],[3.0,-8],[6.0,-8],[9.0,0],[9.0,0]]).T 
+# degree = 3
