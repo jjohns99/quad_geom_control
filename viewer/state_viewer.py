@@ -14,7 +14,7 @@ sys.path.append('viewer/state_plotter')
 from viewer.state_plotter.Plotter import Plotter
 from viewer.state_plotter.plotter_args import *
 
-from so3 import Quat2Euler
+from so3 import *
 
 
 class StateViewer:

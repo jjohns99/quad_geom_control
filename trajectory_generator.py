@@ -37,7 +37,7 @@ class TrajectoryGenerator:
             vy = p_dot.item(1)
             ax = p_ddot.item(0)
             ay = p_ddot.item(1)
-            psi = 0.0 # np.arctan2(vy, vx)
+            psi = 0.0 #np.arctan2(vy, vx)
             psi_dot = 0.0 #(vx*ay + vy*ax)/(vx**2 + vy**2)
             # psi = 10.*t
             # psi_dot = 10.0
@@ -46,27 +46,29 @@ class TrajectoryGenerator:
 
         elif self.type == "bspline":
             if t > self.knots[-1]:
-                p = np.array([[self.x_spline(self.knots[-1]).item(0), 0.0, self.z_spline(self.knots[-1]).item(0)]]).T
-                # p = np.array([[0.0, self.x_spline(self.knots[-1]).item(0), self.z_spline(self.knots[-1]).item(0)]]).T
+                # p = np.array([[self.x_spline(self.knots[-1]).item(0), 0.0, self.z_spline(self.knots[-1]).item(0)]]).T
+                p = np.array([[0.0, self.x_spline(self.knots[-1]).item(0), self.z_spline(self.knots[-1]).item(0)]]).T
                 derivs = []
                 for i in range(3):
                     derivs.append(np.zeros((3,1)))
             else:
-                p = np.array([[self.x_spline(t).item(0), 0.0, self.z_spline(t).item(0)]]).T
-                # p = np.array([[0.0, self.x_spline(t).item(0), self.z_spline(t).item(0)]]).T
+                # p = np.array([[self.x_spline(t).item(0), 0.0, self.z_spline(t).item(0)]]).T
+                p = np.array([[0.0, self.x_spline(t).item(0), self.z_spline(t).item(0)]]).T
                 derivs = []
                 for i in range(3):
-                    derivs.append(np.array([[self.x_derivs[i](t).item(0), 0.0, self.z_derivs[i](t).item(0)]]).T)
-                    # derivs.append(np.array([[0.0, self.x_derivs[i](t).item(0), self.z_derivs[i](t).item(0)]]).T)
+                    # derivs.append(np.array([[self.x_derivs[i](t).item(0), 0.0, self.z_derivs[i](t).item(0)]]).T)
+                    derivs.append(np.array([[0.0, self.x_derivs[i](t).item(0), self.z_derivs[i](t).item(0)]]).T)
             vx = derivs[0].item(0)
             vy = derivs[0].item(1)
             ax = derivs[1].item(0)
             ay = derivs[1].item(1)
-            psi = np.arctan2(vy, vx)
-            if (vx**2 + vy**2) == 0:
-                psi_dot = 0.0
-            else:
-                psi_dot = (vx*ay + vy*ax)/(vx**2 + vy**2)
+            # psi = np.arctan2(vy, vx)
+            # if (vx**2 + vy**2) == 0:
+            #     psi_dot = 0.0
+            # else:
+            #     psi_dot = (vx*ay + vy*ax)/(vx**2 + vy**2)
+            psi = 0.0
+            psi_dot = 0.0
 
             return DesiredState(p, derivs[0], derivs[1], derivs[2], psi, psi_dot)
 
@@ -95,5 +97,5 @@ class TrajectoryGenerator:
             # plt.plot(t, self.z_derivs[2](t))
             # plt.show()
             # input()
-            # return np.vstack([np.zeros(t.shape), self.x_spline(t), self.z_spline(t)])
-            return np.vstack([self.x_spline(t), np.zeros(t.shape), self.z_spline(t)])
+            return np.vstack([np.zeros(t.shape), self.x_spline(t), self.z_spline(t)])
+            # return np.vstack([self.x_spline(t), np.zeros(t.shape), self.z_spline(t)])

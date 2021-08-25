@@ -27,6 +27,8 @@ def main():
     # state_plots = StateViewer()
     # ctrl_plots = ControlsViewer()
 
+    save_data = None
+
     # delta = np.array([[0.5],[0.5],[0.5],[0.5]])
     t = 0
     last_time = time.time()
@@ -34,12 +36,9 @@ def main():
     while t < P.tf:
         des_state = traj.get_state(t)
         # des_state = DesiredState(np.array([[0.0, 0.0, 0.0]]).T, np.array([[0.0, 0.0, 0.0]]).T, np.zeros((3,1)), np.zeros((3,1)), 0.0, 0.0)
-        s = time.time()
         delta, commanded_state = ctrl.update(dyn.state, des_state)
-        e = time.time()
-        print('Time: ', e-s, " fr: ", 1/(e-s))
         dyn.update(delta)
-        # commanded_state = np.zeros((13,1))
+        commanded_state[7:10] = -commanded_state[7:10]
 
         view.update(dyn.state)
         # state_plots.update(dyn.state, commanded_state, P.ts)
@@ -48,6 +47,14 @@ def main():
         while time.time() - last_time < P.ts:
             pass
         last_time = time.time()
+
+        if save_data is None:
+          save_data = np.hstack([np.array([[t]]), dyn.state.T, commanded_state.T])
+          print(save_data.shape)
+        else: 
+          save_data = np.vstack([save_data, np.hstack([np.array([[t]]), dyn.state.T, commanded_state.T])])
+
+    # np.save("data/upside_down_trace.npy", save_data)
 
 if __name__ == "__main__":
     main()

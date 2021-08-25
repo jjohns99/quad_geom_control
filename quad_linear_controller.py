@@ -63,25 +63,18 @@ class QuadLinearController:
 
         f = -self.Kt @ et + self.m*(self.g*e3 - des.pd_ddot)
 
+        # T = -np.dot(f.T, R_bi.T@e3).item(0)
         T = np.linalg.norm(f)
 
         k_d = f/np.linalg.norm(f)
-        # if not self.clipped_props:
         kxs = cross(k_d, sd)
         j_d = kxs/np.linalg.norm(kxs)
-        # else:
-        #     kxi = cross(k_d, R_bi[:,[0]])
-        #     j_d = kxi/np.linalg.norm(kxi)
         i_d = cross(j_d, k_d)
 
         R_di = np.hstack([i_d, j_d, k_d])
 
         k_d_dot = proj(k_d)/np.linalg.norm(f) @ (-self.m*des.pd_dddot - self.Kt@(self.At - self.Bt@self.Kt)@et)
-        # if not self.clipped_props:
         j_d_dot = proj(j_d)/np.linalg.norm(kxs) @ (cross(k_d, sd_dot) + cross(k_d_dot, sd))
-        # else:
-        #     R_bi_dot = R_bi @ hat(om_b)
-        #     j_d_dot = proj(j_d)/np.linalg.norm(kxi) @ (cross(k_d, R_bi_dot[:,[0]]) + cross(k_d_dot, R_bi[:,[0]]))
         i_d_dot = cross(j_d, k_d_dot) + cross(j_d_dot, k_d)
 
         R_di_dot = np.hstack([i_d_dot, j_d_dot, k_d_dot])
@@ -93,18 +86,16 @@ class QuadLinearController:
         self.om_d_prev = om_d
 
         R_db = R_bi.T @ R_di
-        om_err = om_b - R_db@om_d
+        # om_err = om_b - R_db@om_d
+        om_err = R_db@om_d - om_b
         r_err = Log(R_db)
 
         om_db_dot = -cross(om_b, R_db@om_d) + R_db@self.om_d_dot
         # tau = cross(om_b, self.J@om_b) + self.J@om_db_dot + self.kr*vee(skew_sym(R_db)) - self.Kom@om_err #this uses trace error
-        tau = cross(om_b, self.J@om_b) + self.J@om_db_dot + R_db@J_l_inv(r_err).T@self.kr@r_err - self.Kom@om_err #this uses log error
+        tau = cross(om_b, self.J@om_b) + self.J@om_db_dot + J_l_inv(r_err).T@self.kr@r_err + self.Kom@om_err #this uses log error
 
         commanded_state = np.vstack([des.pd, des.pd_dot, Rotation2Quat(R_di), om_d])
-        if not self.clipped_props:
-            delta_unsat = self.mix_inv @ np.vstack([T, tau])
-        else:
-            delta_unsat = np.vstack([self.clipped_mix_inv @ np.vstack([T, tau.item(1)]), np.zeros((2,1))])
+        delta_unsat = self.mix_inv @ np.vstack([T, tau])
 
         return self.sat(delta_unsat), commanded_state
 

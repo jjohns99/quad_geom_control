@@ -2,7 +2,7 @@ import numpy as np
 from so3 import *
 
 #initial conditions
-x0 = np.array([[0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
+x0 = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
 euler0 = np.array([[0.0*np.pi/180], [0.0*np.pi/180], [0.0*np.pi/180]]).T
 x0[6:10] = Euler2Quat(euler0)
 
@@ -18,7 +18,7 @@ kf = g
 kt = 5.0
 l = 0.25
 
-input_stdev = 0.0 #0.04
+input_stdev = 0.04 #0.04
 
 #quad mixer
 mixer = np.array([[kf, kf, kf, kf],
@@ -26,7 +26,7 @@ mixer = np.array([[kf, kf, kf, kf],
                 [l*kf, -l*kf, 0, 0],
                 [-kt, -kt, kt, kt]])
 
-control_kf = kf*1.2
+control_kf = kf*1.1
 control_mixer = np.array([[control_kf, control_kf, control_kf, control_kf],
                           [0, 0, l*control_kf, -l*control_kf],
                           [l*control_kf, -l*control_kf, 0, 0],
@@ -37,7 +37,7 @@ clipped_props = False
 
 #sim params
 ts = 0.01
-tf = 60.0
+tf = 15.0
 
 #geometric control params
 Kp = np.diag([2.0, 2.0, 2.2])
@@ -63,13 +63,13 @@ sig = 0.05
 #linear control params (with integrator)
 At = np.block([[np.zeros((3,3)), np.eye(3), np.zeros((3,3))], [np.zeros((3,3)), np.zeros((3,3)), np.zeros((3,3))], [np.eye(3), np.zeros((3,3)), np.zeros((3,3))]])
 Bt = np.vstack([np.zeros((3,3)), -1.0/m*np.eye(3), np.zeros((3,3))])
-Qt = np.diag([2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 0.1, 0.1, 0.1])
+Qt = np.diag([2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 0.001, 0.001, 0.1])
 Rt = np.diag([0.1, 0.1, 1.0])
 Qr = np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])*0.01
 Rr = np.diag([0.05, 0.05, 0.05])
 
 #sinusoid trajectory params
-#fast circle
+#fast circle$
 # period = np.array([[2.5, 2.5, 2.5/4]]).T 
 # amplitude = np.array([[5.0, 5.0, 0.0]]).T
 # phase = np.array([[0.0, np.pi/2.0, 0.0]]).T
@@ -82,13 +82,13 @@ offset = np.array([[0.0, 0.0, -1.5]]).T
 
 #bspline trajectory params
 #flip trajectory
-# knots = np.array([0,0,0,0,1.1,1.9,3,3,3,3])*1.5
-# coeffs = np.array([[0,0],[0,0],[3.0,-15],[-1.0,-15],[3.0,0],[3.0,0]]).T 
-# degree = 3
-#line trajectory
-knots = np.array([0,0,0,0,3,3,3,3])*5
-coeffs = np.array([[0,0],[0,0],[5.0,-3.0],[5.0,-3.0]]).T 
+knots = np.array([0,0,0,0,0.95,1.05,2,2,2,2])*1.8
+coeffs = np.array([[0,0],[0,0],[4.0,-10],[-2.0,-10],[3.0,0],[3.0,0]]).T 
 degree = 3
+#line trajectory
+# knots = np.array([0,0,0,0,3,3,3,3])*5
+# coeffs = np.array([[0,0],[0,0],[5.0,-3.0],[5.0,-3.0]]).T 
+# degree = 3
 # knots = np.array([0,0,0,0,1.0,2.0,3,3,3,3])*1.5
 # coeffs = np.array([[0,0],[0,0],[3.0,-8],[6.0,-8],[9.0,0],[9.0,0]]).T 
 # degree = 3
