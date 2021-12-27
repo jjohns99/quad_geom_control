@@ -14,7 +14,7 @@ sys.path.append('viewer/state_plotter')
 from viewer.state_plotter.Plotter import Plotter
 from viewer.state_plotter.plotter_args import *
 
-from so3 import *
+from so3_py import *
 
 
 class StateViewer:

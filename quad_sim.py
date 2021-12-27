@@ -4,12 +4,13 @@ import params as P
 from quad_dynamics import QuadDynamics
 from quad_geometric_controller import *
 from quad_linear_controller import QuadLinearController
-from quad_se3_controller import QuadSE3Controller
+# from quad_se3_controller import QuadSE3Controller
 from trajectory_generator import TrajectoryGenerator
 from viewer.quad_viewer import QuadViewer
 from viewer.state_viewer import StateViewer
 from viewer.controls_viewer import ControlsViewer
-from so3 import Euler2Quat
+from so3_py import Euler2Quat
+import matplotlib.pyplot as plt
 
 def main():
     dyn = QuadDynamics(P)
@@ -24,25 +25,30 @@ def main():
 
     view = QuadViewer(P.l)
     view.addTrajectory(traj_points)
-    # state_plots = StateViewer()
-    # ctrl_plots = ControlsViewer()
+    state_plots = StateViewer()
+    ctrl_plots = ControlsViewer()
 
     save_data = None
+    lee3_mode = []
 
     # delta = np.array([[0.5],[0.5],[0.5],[0.5]])
     t = 0
     last_time = time.time()
     input()
     while t < P.tf:
-        des_state = traj.get_state(t)
-        # des_state = DesiredState(np.array([[0.0, 0.0, 0.0]]).T, np.array([[0.0, 0.0, 0.0]]).T, np.zeros((3,1)), np.zeros((3,1)), 0.0, 0.0)
+        # des_state = traj.get_state(t)
+        des_state = DesiredState(np.array([[0.0, 0.0, 0.0]]).T, np.array([[0.0, 0.0, 0.0]]).T, np.zeros((3,1)), np.zeros((3,1)), 0.0, 0.0)
         delta, commanded_state = ctrl.update(dyn.state, des_state)
         dyn.update(delta)
         commanded_state[7:10] = -commanded_state[7:10]
 
         view.update(dyn.state)
-        # state_plots.update(dyn.state, commanded_state, P.ts)
-        # ctrl_plots.update(delta, P.ts)
+        state_plots.update(dyn.state, commanded_state, P.ts)
+        ctrl_plots.update(delta, P.ts)
+
+        if P.control_type == "lee3":
+          lee3_mode.append(ctrl.m_lee3)
+
         t += P.ts
         while time.time() - last_time < P.ts:
             pass
@@ -54,7 +60,11 @@ def main():
         else: 
           save_data = np.vstack([save_data, np.hstack([np.array([[t]]), dyn.state.T, commanded_state.T])])
 
-    # np.save("data/upside_down_trace.npy", save_data)
+    np.save("data/upside_down_lee1.npy", save_data)
+    print("saved")
+    if P.control_type == "lee3":
+      plt.plot(P.tf/len(lee3_mode)*np.array([i for i in range(len(lee3_mode))]), lee3_mode)
+      plt.show()
 
 if __name__ == "__main__":
     main()

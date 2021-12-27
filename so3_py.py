@@ -113,6 +113,11 @@ def log(R):
 def Log(R):
     return vee(log(R))
 
+def Exp(phi):
+  th = np.linalg.norm(phi)
+  u = phi/th
+  return np.eye(3) + np.sin(th)*hat(u) + (1.0 - np.cos(th))*hat(u)@hat(u)
+
 def J_r(theta):
     th = np.linalg.norm(theta)
     th_skew = hat(theta)

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.interpolate import BSpline
-from so3 import *
+from so3_py import *
 from quad_geometric_controller import DesiredState
 import matplotlib.pyplot as plt
 
@@ -37,8 +37,8 @@ class TrajectoryGenerator:
             vy = p_dot.item(1)
             ax = p_ddot.item(0)
             ay = p_ddot.item(1)
-            psi = 0.0 #np.arctan2(vy, vx)
-            psi_dot = 0.0 #(vx*ay + vy*ax)/(vx**2 + vy**2)
+            psi = np.arctan2(vy, vx)
+            psi_dot = (vx*ay + vy*ax)/(vx**2 + vy**2)
             # psi = 10.*t
             # psi_dot = 10.0
 
@@ -79,23 +79,31 @@ class TrajectoryGenerator:
 
         elif self.type == "bspline":
             t = np.linspace(self.knots[0], self.knots[-1], 1000)
-            # plt.subplot(421)
-            # plt.plot(t, self.x_spline(t))
-            # plt.subplot(422)
-            # plt.plot(t, self.z_spline(t))
-            # plt.subplot(423)
-            # plt.plot(t, self.x_derivs[0](t))
-            # plt.subplot(424)
-            # plt.plot(t, self.z_derivs[0](t))
-            # plt.subplot(425)
-            # plt.plot(t, self.x_derivs[1](t))
-            # plt.subplot(426)
-            # plt.plot(t, self.z_derivs[1](t))
-            # plt.subplot(427)
-            # plt.plot(t, self.x_derivs[2](t))
-            # plt.subplot(428)
-            # plt.plot(t, self.z_derivs[2](t))
-            # plt.show()
-            # input()
+            plt.subplot(421)
+            plt.title("x")
+            plt.plot(t, self.x_spline(t))
+            plt.subplot(422)
+            plt.title("z")
+            plt.plot(t, self.z_spline(t))
+            plt.subplot(423)
+            plt.title("x1")
+            plt.plot(t, self.x_derivs[0](t))
+            plt.subplot(424)
+            plt.title("z1")
+            plt.plot(t, self.z_derivs[0](t))
+            plt.subplot(425)
+            plt.title("x2")
+            plt.plot(t, self.x_derivs[1](t))
+            plt.subplot(426)
+            plt.title("z2")
+            plt.plot(t, self.z_derivs[1](t))
+            plt.subplot(427)
+            plt.title("x3")
+            plt.plot(t, self.x_derivs[2](t))
+            plt.subplot(428)
+            plt.title("z3")
+            plt.plot(t, self.z_derivs[2](t))
+            plt.show()
+            input()
             return np.vstack([np.zeros(t.shape), self.x_spline(t), self.z_spline(t)])
             # return np.vstack([self.x_spline(t), np.zeros(t.shape), self.z_spline(t)])

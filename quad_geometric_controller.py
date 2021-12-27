@@ -1,5 +1,5 @@
 import numpy as np
-from so3 import *
+from so3_py import *
 
 class DesiredState:
     def __init__(self, pd, pd_dot, pd_ddot, pd_dddot, psid, psid_dot):

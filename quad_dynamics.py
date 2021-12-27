@@ -1,5 +1,5 @@
 import numpy as np
-from so3 import *
+from so3_py import *
 
 class QuadDynamics:
   def __init__(self, P):
@@ -33,6 +33,7 @@ class QuadDynamics:
     self.state += self.ts/6.0 * (k1 + 2*k2 + 2*k3 + k4)
 
     self.state[6:10] /= np.linalg.norm(self.state[6:10])
+    # self.state[:6] = np.zeros((6,1))
 
 
   def derivatives(self, state, fm):

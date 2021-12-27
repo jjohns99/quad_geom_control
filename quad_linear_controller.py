@@ -1,6 +1,7 @@
 import numpy as np
 import control
-from so3 import *
+from so3_py import *
+from so3 import SO3
 
 #this controller uses LQR for trajectory following
 #and geometric control for attitude tracking
@@ -17,6 +18,19 @@ class QuadLinearController:
 
         self.Kom = P.Kom
         self.kr = P.kr
+        self.kr_lee1 = P.kr_lee1
+        self.kr_lee2 = P.kr_lee2
+        
+        self.kr1_lee3 = P.kr1_lee3
+        self.kr2_lee3 = P.kr2_lee3
+        self.alpha_lee3 = P.alpha_lee3
+        self.beta_lee3 = P.beta_lee3
+        self.delta_lee3 = P.delta_lee3
+        self.m_lee3 = 0 #can be 0, 1, or 2. 0 is nominal
+        self.om_lim_lee3 = P.om_lim_lee3
+        self.Kom_lee3 = P.Kom_lee3
+
+        self.control_type = P.control_type
 
         self.g = P.g
         self.m = P.m
@@ -86,13 +100,46 @@ class QuadLinearController:
         self.om_d_prev = om_d
 
         R_db = R_bi.T @ R_di
-        # om_err = om_b - R_db@om_d
         om_err = R_db@om_d - om_b
-        r_err = Log(R_db)
+        r_err = np.array([SO3(R_db).Log().tolist()]).T
 
         om_db_dot = -cross(om_b, R_db@om_d) + R_db@self.om_d_dot
-        # tau = cross(om_b, self.J@om_b) + self.J@om_db_dot + self.kr*vee(skew_sym(R_db)) - self.Kom@om_err #this uses trace error
-        tau = cross(om_b, self.J@om_b) + self.J@om_db_dot + J_l_inv(r_err).T@self.kr@r_err + self.Kom@om_err #this uses log error
+
+        if self.control_type == "lee1":
+          tau = cross(om_b, self.J@om_b) + self.J@om_db_dot + self.kr_lee1*vee(skew_sym(R_db)) + self.Kom@om_err #this uses trace error
+
+        elif self.control_type == "lee2":
+          tau = cross(R_db@om_d, self.J@R_db@om_d) + self.J@R_db@self.om_d_dot + self.kr_lee2*vee(skew_sym(R_db))/np.sqrt(1.0+np.trace(R_db)) + self.Kom@om_err #this uses wierd trace error
+
+        elif self.control_type == "lee3":
+          r_1d = R_di[:,[0]]
+          r_2d = R_di[:,[1]]
+          r_3d = R_di[:,[2]]
+          r_1b = R_bi[:,[0]]
+          r_2b = R_bi[:,[1]]
+          e_r1 = cross(R_bi.T @ r_1d, np.array([[1, 0, 0]]).T)
+          e_r2 = cross(R_bi.T @ r_2d, np.array([[0, 1, 0]]).T)
+
+          Psi_n1 = 1 - (r_1b.T @ r_1d).item(0)
+          Psi_n2 = 1 - (r_2b.T @ r_2d).item(0)
+          Psi_e1 = self.alpha_lee3 + self.beta_lee3 * (r_1b.T @ r_3d).item(0)
+          Psi_e2 = self.alpha_lee3 + self.beta_lee3 * (r_2b.T @ r_3d).item(0)
+          Psi_1 = self.kr1_lee3 * Psi_n1 + self.kr2_lee3 * Psi_n2
+          Psi_2 = self.kr1_lee3 * Psi_n1 + self.kr2_lee3 * Psi_e2
+          Psi_3 = self.kr1_lee3 * Psi_e1 + self.kr2_lee3 * Psi_n2
+          Psi_choices = [Psi_1, Psi_2, Psi_3]
+          Psi_min = np.argmin(Psi_choices)
+          rho = Psi_choices[Psi_min]
+          if Psi_choices[self.m_lee3] - rho >= self.delta_lee3 and np.linalg.norm(om_err) < self.om_lim_lee3:
+            self.m_lee3 = Psi_min
+
+          e_h1 = e_r1 if self.m_lee3 !=2 else -self.beta_lee3 * cross(R_bi.T @ r_3d, np.array([[1, 0, 0]]).T)
+          e_h2 = e_r2 if self.m_lee3 !=1 else -self.beta_lee3 * cross(R_bi.T @ r_3d, np.array([[0, 1, 0]]).T)
+          e_h = self.kr1_lee3*e_h1 + self.kr2_lee3*e_h2
+          tau = cross(R_db@om_d, self.J@R_db@om_d) + self.J@R_db@self.om_d_dot - e_h + self.Kom_lee3@om_err # this uses the overly complicated global hybrid controller
+
+        elif self.control_type == "ours":
+          tau = cross(om_b, self.J@om_b) + self.J@om_db_dot + SO3.Jl_inv(r_err).T@self.kr@r_err + self.Kom@om_err #this uses log error
 
         commanded_state = np.vstack([des.pd, des.pd_dot, Rotation2Quat(R_di), om_d])
         delta_unsat = self.mix_inv @ np.vstack([T, tau])
